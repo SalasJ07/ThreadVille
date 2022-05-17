@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 nix = "0.24.1"
+signal-stack = "0.1.0"
