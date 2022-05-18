@@ -33,7 +33,7 @@ fn set_thread_context(){
 	let mut i: i64;
 
 	// Inicializa en 0 los dead_threads
-    for(i = 0; i < NUM_THREADS; i++) boolean_dead_threads[i] = 0;
+    for(i = 0; i < NUM_THREADS; i += 1) boolean_dead_threads[i] = 0;
 
     set_exit_context();
     
@@ -95,7 +95,7 @@ fn my_thread_create(please_work: &dyn Fn(), *mut args: std::ptr::null_mut(), tic
    
     if (!init) {
         set_thread_context();
-        init++;
+        init += 1;
     }
 
     let *mut stack: std::ptr::null_mut(); // para utilizar context
@@ -122,8 +122,8 @@ fn my_thread_create(please_work: &dyn Fn(), *mut args: std::ptr::null_mut(), tic
     tickets[active_threads] = tickets_s;
     priority[active_threads] = priority_s;
     total_tickets += tickets_s;
-    active_threads++;
-    active_threads_aux++;
+    active_threads += 1;
+    active_threads_aux += 1;
 }
 
 // Función encargada de terminar un thread
@@ -166,7 +166,7 @@ fn my_thread_detach(*mut thread_to_detach: ucontext_t) {
 
 // Función que se encarga de ejecutar los hilos una vez que son creados.
 // Empezando de 0 (el primero de la lista).
-fn run_threads() {
+fn run_all_threads() {
 
     current_thread = &threads[0];
 
@@ -176,27 +176,146 @@ fn run_threads() {
 
 // ====== Funciones de my_scheduler ====== 
 
+let mut active_sched: i64;
+let mut signal_context: ucontext_t;
+let mut alternate: i64;
 
-fn my_thread_chsched() {
-
-}
-
-fn run_all_threads() {
-
+fn my_thread_chsched(new_sched: i64) {
+    if(new_sched == 0) {
+        active_sched = 0;
+    } else if(new_sched == 1) {
+        active_sched = 1;
+    } else if(new_sched == 2) {
+        active_sched = 2;
+    }
 }
 
 fn sched_round_robin() {
+    if(active_threads_aux > 0){
 
+        current_context = (current_context + 1); // Pasa al siguiente contexto
+
+        // Verificar si el thread sigue vivo
+        if(boolean_dead_threads[current_context% active_threads]){
+
+            // Sigue revisando la lista hasta que encuentre un thread vivo
+            while(boolean_dead_threads[current_context% active_threads]){
+                current_context+=1;
+            }
+        }
+
+        // Se asigna el contexto al thread actual
+        current_context = current_context % active_threads;
+        current_thread = &threads[current_context];
+
+        setcontext(current_thread); //activa el nuevo hilo
+    }
 }
 
 fn sched_sort() {
+    //srand(time(NULL));
 
+    let mut aux: i64;
+
+    // Tiene la cantidad de threads que estan activos y vivos 
+    // y valida si hay alguno
+    if(active_threads_aux > 0){
+
+        let mut winner:i64 = //rand()%(total_tickets+1);//saca el ganador del sorteo
+        aux = winner;
+        let mut i: i64;
+
+        for (i = 0; i < active_threads; i += 1) {//revisa quien es el ganador
+
+            aux -= tickets[i];
+
+            if(aux<=0){
+                if(boolean_dead_threads[i% active_threads]){
+                    while(boolean_dead_threads[i% active_threads]){
+                        i+=1;
+                    }
+                }
+
+                current_context = i;
+                current_thread = &threads[current_context];
+                break;
+            }
+
+            else{
+
+                tickets[i] += 1;
+                total_tickets += 1;
+            }
+        }
+        setcontext(current_thread);//activa el nuevo hilo
+    }
 }
 
 fn sched_real_time() {
+    let mut aux: i64 = -1;
+    let mut last: ucontext_t = current_context;
+    let mut i: i64;
+
+    // Tiene la cantidad de threads que estan activos y vivos 
+    // y valida si hay alguno
+    if(active_threads_aux > 0){
+
+        // Itera hasta encontrar el hilo con mayor prioridad que no haya sido
+        // ejecutado
+        for (i = 0; i < active_threads; i+=1) {
+
+            if(aux < priority[i] && !boolean_dead_threads[i] && !priority_aux[i]){
+
+                current_context = i;
+                aux = priority[i];
+            }
+        }
+
+        if(aux == -1){
+
+            for (i = 0; i < active_threads; i+=1) {
+
+                priority_aux[i] = 0;
+            }
+
+            my_sched_real_time();
+
+        }
+        else{
+
+            // Fija el thread como ya ejecutado
+            priority_aux[current_context] = 1;
+            current_thread = &threads[current_context];
+
+            setcontext(current_thread);
+        }
+    }
 
 }
 
 fn alternate_scheduler() {
+    getcontext(&signal_context);
+
+    signal_context.uc_stack.ss_sp = signal_stack;
+    signal_context.uc_stack.ss_size = STACK_SIZE;
+    signal_context.uc_stack.ss_flags = 0;
+
+    sigemptyset(&signal_context.uc_sigmask);
+
+    alternate = 0;
+
+    // Alterna el valor de active_sched
+    alternate = alternate^active_sched;
+
+    // Se envia el valor del nuevo algoritmo de scheduling a utilizar
+    my_thread_chsched(alternate);
+
+    if(active_sched == 0){makecontext(&signal_context, my_sched_round_robin, 1);}
+
+    if(active_sched == 1){makecontext(&signal_context, my_sched_sort, 1);}
+
+    if(active_sched == 2){makecontext(&signal_context, my_sched_real_time, 1);}
+
+    swapcontext(current_thread,&signal_context);
     
 }
