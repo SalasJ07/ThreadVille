@@ -168,11 +168,11 @@ fn my_thread_detach(*mut thread_to_detach: ucontext_t) {
 // Empezando de 0 (el primero de la lista).
 fn run_threads() {
 
-    // Una vez ejecutados, se les asigna el context
-    set(&threads[0]);
+    current_thread = &threads[0];
+
+    setcontext(&threads[0]);
+
 }
-
-
 
 // ====== Funciones de my_scheduler ====== 
 
