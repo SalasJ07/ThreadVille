@@ -39,6 +39,32 @@ struct screen_queue {
 
 // Informacion que puede tener una animacion
 
+struct animation_data {
+    sched: u32,
+    screen_num: u32,
+    start: u32,
+    end: u32, 
+    current_x: u32,
+    current_y: u32,
+    starting_x: u32,
+    starting_y: u32,
+    ending_x: u32,
+    ending_y: u32,
+    // -
+}
+
+
+struct layout {
+    let p: *mut String,
+    total_screens: u32,
+    let list: mut* screen_queue,
+    // -
+}
+
+fn animation_processor() {
+
+}
+
 
 
 
