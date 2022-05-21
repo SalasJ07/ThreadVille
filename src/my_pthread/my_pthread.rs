@@ -13,7 +13,7 @@ let mut exit_context : ucontext_t;
 
 let mut signal_stack: signal_stack;
 
-// Otras variables
+// Variables relacionadas a los hilos
 let mut threads_off: [i64; THREADS_NUM];
 let mut current_context: i64;
 let mut priority:[i64; THREADS_NUM];
@@ -26,7 +26,13 @@ let mut active_threads: i64;
 let mut active_threads_aux: i64;
 let mut total_tickets: i64;
 
-
+/**
+ * set_thread_context
+ * No recibe ningun parametros
+ * Se utiliza para inicializar las variables necesarias para crear contexto
+ * Solo se utilizará al crear el primer hilo
+ * No retorna nada
+ */
 fn set_thread_context(){
 
 
@@ -35,17 +41,16 @@ fn set_thread_context(){
 	// Inicializa en 0 los dead_threads
     for(i = 0; i < NUM_THREADS; i += 1) boolean_dead_threads[i] = 0;
 
+    //sale del contexto actual
     set_exit_context();
     
-    // Struct necesario para la creacion del quantum
     let mut it: itimerval;
 
     signal_stack = malloc(STACK_SIZE);
 
     it.it_interval.tv_sec = 0;
-    it.it_interval.tv_usec = INTERVAL * 1000; // Indica el tiempo de milisegundos 
-                                              // para intervales de ejecucion
-    it.it_value = it.it_interval; // Se asigna el valor
+    it.it_interval.tv_usec = INTERVAL * 1000; // Tiempo en minisegundos
+    it.it_value = it.it_interval;
 
     setitimer(ITIMER_REAL, &it, null);
 
@@ -62,7 +67,14 @@ fn set_thread_context(){
     sigaction(SIGALRM, &act, null);
 
 }
-
+/** execute_exit_context 
+ * No recibe parametros
+ * No retorna nada
+ * Metodo utilizado para eliminar o finalizar un contexto
+ * Selecciona en la variable boolean_dead_threads que el contexto finalizo asignandole un 1
+ * alterna el sched utilizado
+ * elimina de los contadores el contexto debido a que ya finalizó
+ */
 fn execute_exit_context() {
     boolean_dead_threads[current_context] = 1;
     total_tickets -= tickets[current_context];
@@ -72,11 +84,15 @@ fn execute_exit_context() {
 
     while(1);
 }
-
+/** set_exit_context
+ * No recibe parametros
+ * No retorna nada
+ * Le indica al sistema que finalice el contexto
+ * Además llama al metood execute_exit_context para actualizar las variables del programa
+ */
 fn set_exit_context() {
     let mut exit_context_created: i64;
     if(!exit_context_created){
-        //getcontext(ucp: *mut ucontext_t)
         getcontext(&exit_context);
 
         exit_context.uc_link = 0;
@@ -90,7 +106,13 @@ fn set_exit_context() {
     }
 
 }
-//f: &dyn Fn(i32) -> i32
+
+/** my_thread_create
+ * Recibe como parametros la funcion a correr, los argumentos para dicha funcion, numero de ticket, su prioridad
+ * No retorna nada
+ * Este metodo se encarga de crear un hilo para la funcion que se requiera
+ * Le asigna espacio de memoria, además de inicializar el hilo y agregarlo a la lista de hilos de la lib
+ */
 fn my_thread_create(please_work: &dyn Fn(), *mut args: std::ptr::null_mut(), tickets_s: i64, priority_s: i64) {
    
     if (!init) {
@@ -125,14 +147,14 @@ fn my_thread_create(please_work: &dyn Fn(), *mut args: std::ptr::null_mut(), tic
     active_threads += 1;
     active_threads_aux += 1;
 }
-
-// Función encargada de terminar un thread
+/** my_thread_end
+ * No recibe parametros
+ * No retorna nada
+ * Este metodo se encarga de terminar un thread
+ * además actualiza las variables
+ */
 fn my_thread_end() {
     
-    /*
-    Referencia de phtread_exit()
-    https://man7.org/linux/man-pages/man3/pthread_exit.3.html
-    */
     
     boolean_dead_threads[current_context] = 1;
     total_tickets-=tickets[current_context];
@@ -141,22 +163,33 @@ fn my_thread_end() {
     sched_alternator();
 
 }
-
+/** my_thread_yield
+ * No recibe pametros
+ * No retorna nada
+ * Función encargada de alternar el scheduler
+ */
 fn my_thread_yield() {
 
-
-    // Se usaría la función de alternar que para ceder la ejecución
-    // del siguiente hilo utilizando otra implementación de scheduler
     alternate_scheduler();
 
 }
 
+/** my_thread_join
+ * Recibe 2 contextos
+ * no retorna nada
+ * Este metodo se encarga de modificar el enlace del primer hilo, asignandole el segundo hilo
+ */
 fn my_thread_join(*mut active_thread: ucontext_t, *mut waiting_thread: ucontext_t) {
 
     active_thread.uc_link = waiting_thread;
 
 }
 
+/** my_thread_detach
+ * Recibe un hilo para desactivar
+ * No retorna nada
+ * libera un contexto o hilo
+ */
 fn my_thread_detach(*mut thread_to_detach: ucontext_t) {
 
     setcontext(thread_to_detach);
@@ -164,8 +197,11 @@ fn my_thread_detach(*mut thread_to_detach: ucontext_t) {
 
 }
 
-// Función que se encarga de ejecutar los hilos una vez que son creados.
-// Empezando de 0 (el primero de la lista).
+/** run_all_threads
+ * No recibe nada
+ * No regresa nada
+ * Metodo encargado de ejecutar el primer hilo de la lista
+ */
 fn run_all_threads() {
 
     current_thread = &threads[0];
@@ -179,7 +215,11 @@ fn run_all_threads() {
 let mut active_sched: i64;
 let mut signal_context: ucontext_t;
 let mut alternate: i64;
-
+/** my_thread_chsched
+ * recibe cual sera el nuevo sched
+ * no retorna nada
+ * depende del valor ingresado se le asigna ese valor
+ */
 fn my_thread_chsched(new_sched: i64) {
     if(new_sched == 0) {
         active_sched = 0;
@@ -190,6 +230,13 @@ fn my_thread_chsched(new_sched: i64) {
     }
 }
 
+/** sched_round_robin
+ * No recibe nada
+ * No retorna nada
+ * Metodo utilizado para cambiar de hilo, este metodo busca apartir del hilo actual el siguiente hilo activo
+ * Por medio de la lista boolean_dead_threads verifica que el hilo no se haya terminado en caso de
+ * no ser un hilo finalizado lo asigna y lo corre
+ */
 fn sched_round_robin() {
     if(active_threads_aux > 0){
 
@@ -212,6 +259,13 @@ fn sched_round_robin() {
     }
 }
 
+/** sched_sort
+ * No recibe nada
+ * No retorna nada
+ * Este metodo genera un numero aleatorio el cual nos indicara cual de los hilos es el siguiente en ser ejecutado
+ * una vez elegido uno se verifica que no sea un hilo finalizado
+ * en caso de serlo se pasa al siguiente hilo no finalizado
+ */
 fn sched_sort() {
     //srand(time(NULL));
 
@@ -251,17 +305,21 @@ fn sched_sort() {
     }
 }
 
+/** sched_real_time
+ * No recibe nada
+ * No retorna nada
+ * Metodo utilizado para ejecutar los hilos por prioridad
+ * La funcion se encarga de buscar el hilo con mayor prioridad y ejecutarlo
+ */
 fn sched_real_time() {
     let mut aux: i64 = -1;
     let mut last: ucontext_t = current_context;
     let mut i: i64;
 
-    // Tiene la cantidad de threads que estan activos y vivos 
-    // y valida si hay alguno
+    // Tiene la cantidad de threads que estan activos y vivos y valida si hay alguno
     if(active_threads_aux > 0){
 
-        // Itera hasta encontrar el hilo con mayor prioridad que no haya sido
-        // ejecutado
+        // Itera hasta encontrar el hilo con mayor prioridad que no haya sido ejecutado
         for (i = 0; i < active_threads; i+=1) {
 
             if(aux < priority[i] && !boolean_dead_threads[i] && !priority_aux[i]){
@@ -292,7 +350,12 @@ fn sched_real_time() {
     }
 
 }
-
+/** alternate_scheduler
+ * No recibe nada
+ * No retorna nada
+ * Metodo utilizado para alternar el scheduler por medio de un xor entre un 0 y el sched actual
+ * ademas de reiniciar los signals
+ */
 fn alternate_scheduler() {
     getcontext(&signal_context);
 
@@ -304,7 +367,7 @@ fn alternate_scheduler() {
 
     alternate = 0;
 
-    // Alterna el valor de active_sched
+    // Alterna el valor de active_sched por medio de un xor
     alternate = alternate^active_sched;
 
     // Se envia el valor del nuevo algoritmo de scheduling a utilizar
