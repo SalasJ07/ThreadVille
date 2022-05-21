@@ -1,6 +1,6 @@
 use ncurses::*;
 use libc::*;
-mod "../config/my_parser.rs"
+mod "../my_pthread/animation_processsor.rs"
 
 let mut configuration: *mut config;
 /** create_interface
