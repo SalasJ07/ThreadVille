@@ -27,18 +27,18 @@ void create_interface(){
 	while(temp_monitor != NULL){
 
       // Se crea un nuevo window por cada monitor y se guarda en la estructura
-      temp_monitor.canvas_window = newwin(temp_monitor.height_canvas_size,temp_monitor.width_canvas_size, y, x);
+      temp_monitor.curses_window = newwin(temp_monitor.height_curses_size,temp_monitor.width_curses_size, y, x);
       
       // Se posicionan en la terminal segun el ancho de cada uno
-      x += temp_monitor.width_canvas_size;
+      x += temp_monitor.width_curses_size;
       
-      //y+=temp_monitor.height_canvas_size;
+      //y+=temp_monitor.height_curses_size;
       
       // Funcion de ncurses para pintar los bordes del window
-      box(temp_monitor.canvas_window, 0, 0);
+      box(temp_monitor.curses_window, 0, 0);
       
       // Es necesario para mostrar los cambios hechos en window
-      wrefresh(temp_monitor.canvas_window);
+      wrefresh(temp_monitor.curses_window);
 		  
       // Se mueve al siguiente
       temp_monitor = temp_monitor.next;
