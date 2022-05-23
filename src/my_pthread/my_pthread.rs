@@ -1,5 +1,6 @@
 use signal_stack::*;
 use libc::*;
+use rand::Rng;
 
 // ====== Funciones de y_pthread ======
 
@@ -7,20 +8,20 @@ const THREADS_NUM: u64 = 1000;
 const STACK_SIZE: u64 = 10000;
 
 // Para el Context
+static mut set: libc::sigset_t = std::ptr::null_mut();
 static mut threads: libc::ucontext_t = 1000; 
-static current_thread: *mut i64;
-static mut exit_context : libc::ucontext_t;
+static current_thread: mut i64 = 0;
+static mut exit_context : libc::ucontext_t = 0;
 
-static mut signal_stack: signal_stack::signal_stack;
+static mut signal_stack: signal_stack::signal_stack = 0;
 
 // Variables relacionadas a los hilos
-static mut threads_off:[i64; THREADS_NUM] = [0,THREADS_NUM];
-static mut current_context: i64 = 0;
-static mut priority:[i64; THREADS_NUM] = [0,THREADS_NUM];
-static mut priority_aux:[i64; THREADS_NUM] = [0,THREADS_NUM];
-static mut tickets:[i64; THREADS_NUM] = [0,THREADS_NUM];
-static mut dead_threads:[i64; THREADS_NUM] = [0,THREADS_NUM];
-static mut current_context: i64 = 0;
+static mut threads_off:[u64; 1000] = [0,1000];
+static mut current_context: u64 = 0;
+static mut priority:[u64; 1000] = [0,1000];
+static mut priority_aux:[u64; 1000] = [0,1000];
+static mut tickets:[u64; 1000] = [0,1000];
+static mut dead_threads:[u64; 1000] = [0,1000];
 static mut initialize: i64 = 0;
 static mut active_threads: i64 = 0;
 static mut active_threads_aux: i64 = 0;
@@ -39,7 +40,7 @@ pub fn set_thread_context(){
 	let mut i: i64;
 
 	// Inicializa en 0 los dead_threads
-    for i in NUM_THREADS {
+    for i in 1000 {
         dead_threads[i] = 0;
     } 
 
@@ -51,13 +52,13 @@ pub fn set_thread_context(){
     signal_stack = libc::malloc(STACK_SIZE);
 
     it.it_interval.tv_sec = 0;
-    it.it_interval.tv_usec = INTERVAL * 1000; // Tiempo en minisegundos
+    it.it_interval.tv_usec =  150 * 1000; // Tiempo en minisegundos
     it.it_value = it.it_interval;
 
-    setitimer(libc::ITIMER_REAL, &it, null);
+    libc::setitimer(0, &it, std::ptr::null_mut());
 
     let mut act: libc::sigaction;
-    act.sa_sigaction = sched_alternator;
+    act.sa_sigaction = alternate_scheduler;
 
     libc::sigemptyset(&act.sa_mask);
     act.sa_flags = libc::SA_RESTART | libc::SA_SIGINFO;
@@ -66,7 +67,7 @@ pub fn set_thread_context(){
 
     libc::sigaddset(&libc::set, libc::SIGALRM);
 
-    libc::sigaction(libc::SIGALRM, &act, null);
+    libc::sigaction(libc::SIGALRM, &act, std::ptr::null_mut());
 
 }
 /** execute_exit_context 
@@ -82,9 +83,9 @@ pub fn execute_exit_context() {
     total_tickets -= tickets[current_context];
     active_threads_aux -= 1;
 
-    sched_alternator();
+    alternate_scheduler();
 
-    while(1);
+    while 1 { };
 }
 /** set_exit_context
  * No recibe parametros
@@ -115,14 +116,14 @@ pub fn set_exit_context() {
  * Este metodo se encarga de crear un hilo para la funcion que se requiera
  * Le asigna espacio de memoria, además de inicializar el hilo y agregarlo a la lista de hilos de la lib
  */
-pub fn my_thread_create(please_work: &dyn Fn(), args: *mut std::ptr::null_mut(), tickets_s: i64, priority_s: i64) {
+pub fn my_thread_create(please_work: &dyn Fn(), args: mut std::ptr::null_mut(), tickets_s: i64, priority_s: i64) {
    
     if !initialize {
         set_thread_context();
         initialize += 1;
     }
 
-    let stack: *mut std::ptr::null_mut(); // para utilizar context
+    let stack: mut std::ptr::null_mut(); // para utilizar context
 
     // Crea objeto tipo context
     let thread : *mut libc::ucontext_t = &threads[active_threads];
@@ -162,7 +163,7 @@ pub fn my_thread_end() {
     total_tickets -= tickets[current_context];
     active_threads_aux -= 1;
 
-    sched_alternator();
+    alternate_scheduler();
 
 }
 /** my_thread_yield
@@ -215,7 +216,7 @@ pub fn run_all_threads() {
 // ====== Funciones de my_scheduler ====== 
 
 static mut active_sched: i64 = 0;
-static mut signal_context: libc::ucontext_t;
+static mut signal_context: libc::ucontext_t = 0;
 static mut alternate: i64 = 0;
 /** my_thread_chsched
  * recibe cual sera el nuevo sched
@@ -277,7 +278,8 @@ pub fn sched_sort() {
     // y valida si hay alguno
     if active_threads_aux > 0 {
 
-        let mut winner:i64 = //rand()%(total_tickets+1);//saca el ganador del sorteo
+        let mut winner = rand::thread_rng(); //rand()%(total_tickets+1);//saca el ganador del sorteo
+        winner = winner.gen_range(0..total_tickets);
         aux = winner;
         let mut i: i64;
 
@@ -337,7 +339,7 @@ pub fn sched_real_time() {
                 priority_aux[i] = 0;
             }
 
-            my_sched_real_time();
+            sched_real_time();
 
         }
         else{

@@ -3,7 +3,7 @@
 #[path = "./my_pthread/animation_processor.rs"] mod animation_processor;
 use ncurses::*;
 use std::ffi::c_void;
-use libc::*;
+ use libc::*;
 
 let configuration:*mut animation_processor::config;
 let mut fieldLock: i64;
