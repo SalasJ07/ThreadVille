@@ -1,5 +1,5 @@
-mod "../my_pthread/my_mutex.rs"
-use crate::my_pthread::my_mutex::*;
+#[path = "./my_pthread/my_mutex.rs"] mod my_mutex;
+#[path = "./my_pthread/my_pthread.rs"] mod my_pthread;
 use ncurses::*;
 use std::ffi::c_void;
 use libc::*;
@@ -35,7 +35,7 @@ let mut BotExpFin:[char; 10] = {' ', ' ', ' ', '*', '*', '*',' ',' ',' ',' '};
  * Inicializa el mutex a utilizar en la animacion
  */
 fn initialize_animation_lock(){
-  my_mutex_init(&fieldLock);
+  my_mutex::my_mutex_init(&fieldLock);
 
 }
 
@@ -46,15 +46,15 @@ fn initialize_animation_lock(){
  * ademas prepara el mutex para la ciudad
  */
 fn move_figure(arg: *mut c_void){
-    my_mutex_lock(&fieldLock);
+   my_mutex::my_mutex_lock(&fieldLock);
    
    // Conversion del parametro de la funcion del hilo
    // a la estructura item_info
    item_info *figure = (item_info *) arg;
    
-   my_mutex_unlock(&fieldLock);
+   my_mutex::my_mutex_unlock(&fieldLock);
 
-   my_mutex_lock(&fieldLock);
+   my_mutex::my_mutex_lock(&fieldLock);
    
    // Se recorren los monitores para encontrar al monitor que pertenece la figura descrita
    let mut temp_monitor: *mut monitor_info = (*mut monitor_info) malloc(sizeof(monitor_info));
@@ -66,16 +66,16 @@ fn move_figure(arg: *mut c_void){
      temp_monitor = temp_monitor.next;
    }
 
-   my_mutex_unlock(&fieldLock);
+   my_mutex::my_mutex_unlock(&fieldLock);
 
-   my_mutex_lock(&fieldLock);
+   my_mutex::my_mutex_lock(&fieldLock);
    
    // Asigna las posiciones iniciales de la figura
    figure.posicion_actual_x = figure.posicion_inicial_x;
    
    figure.posicion_actual_y = figure.posicion_inicial_y;
    
-   my_mutex_unlock(&fieldLock);
+   my_mutex::my_mutex_unlock(&fieldLock);
    
    // Verifica si es momento de iniciar la animacion de la figura
    while(1){
@@ -83,8 +83,7 @@ fn move_figure(arg: *mut c_void){
      // Verifica si el tiempo recorrido es menor al tiempo de inicio
      // Si lo es, cede el procesador mediante un yield()
      if(time(0) < figure.tiempo_de_inicio){
-      
-       my_thread_yield();
+       my_pthread::my_thread_yield();
      }
 
      // Sino inicia la animacion
@@ -187,7 +186,7 @@ fn move_figure(arg: *mut c_void){
             }
 
 
-            my_mutex_lock(&fieldLock);
+            my_mutex::my_mutex_lock(&fieldLock);
 
             // Se encarga de calcular la siguiente posicion de la figura
             if(figure.posicion_actual_y < figure.posicion_final_y)
@@ -204,7 +203,7 @@ fn move_figure(arg: *mut c_void){
             // Se encarga de calcular la siguiente posicion de la figura
             if(figure.posicion_actual_x > figure.posicion_final_x)
               figure.posicion_actual_x--;
-            my_mutex_unlock(&fieldLock);
+              my_mutex::my_mutex_unlock(&fieldLock);
 
         // Refresca los valores que se le han asignado a la ventana y los aplica
         wrefresh(temp_monitor. canvas_window);

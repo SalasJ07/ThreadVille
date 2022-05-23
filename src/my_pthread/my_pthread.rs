@@ -7,11 +7,11 @@ let THREADS_NUM = 1000;
 let STACK_SIZE = 10000;
 
 // Para el Context
-let mut threads: [ucontext_t; 1000] 
+let mut threads: [libc::ucontext_t; 1000] 
 let current_thread: *mut i64;
-let mut exit_context : ucontext_t;
+let mut exit_context : libc::ucontext_t;
 
-let mut signal_stack: signal_stack;
+let mut signal_stack: signal_stack::signal_stack;
 
 // Variables relacionadas a los hilos
 let mut threads_off: [i64; THREADS_NUM];
@@ -44,27 +44,27 @@ fn set_thread_context(){
     //sale del contexto actual
     set_exit_context();
     
-    let mut it: itimerval;
+    let mut it: libc::itimerval;
 
-    signal_stack = malloc(STACK_SIZE);
+    signal_stack = libc::malloc(STACK_SIZE);
 
     it.it_interval.tv_sec = 0;
     it.it_interval.tv_usec = INTERVAL * 1000; // Tiempo en minisegundos
     it.it_value = it.it_interval;
 
-    setitimer(ITIMER_REAL, &it, null);
+    setitimer(libc::ITIMER_REAL, &it, null);
 
-    let mut sigaction act;
+    let mut act: libc::sigaction;
     act.sa_sigaction = sched_alternator;
 
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = SA_RESTART | SA_SIGINFO;
+    libc::sigemptyset(&act.sa_mask);
+    act.sa_flags = libc::SA_RESTART | libc::SA_SIGINFO;
 
-    sigemptyset(&set);
+    libc::sigemptyset(&libc::set);
 
-    sigaddset(&set, SIGALRM);
+    libc::sigaddset(&libc::set, libc::SIGALRM);
 
-    sigaction(SIGALRM, &act, null);
+    libc::sigaction(libc::SIGALRM, &act, null);
 
 }
 /** execute_exit_context 
@@ -93,7 +93,7 @@ fn execute_exit_context() {
 fn set_exit_context() {
     let mut exit_context_created: i64;
     if(!exit_context_created){
-        getcontext(&exit_context);
+        libc::getcontext(&exit_context);
 
         exit_context.uc_link = 0;
         exit_context.uc_stack.ss_sp = malloc(STACK_SIZE);
@@ -123,11 +123,11 @@ fn my_thread_create(please_work: &dyn Fn(), *mut args: std::ptr::null_mut(), tic
     let *mut stack: std::ptr::null_mut(); // para utilizar context
 
     // Crea objeto tipo context
-    let *mut thread:ucontext_t = &threads[active_threads];
-    getcontext(thread);
+    let *mut thread:libc::ucontext_t = &threads[active_threads];
+    libc::getcontext(thread);
 
     // Asigna memoria a context
-    stack = malloc(STACK_SIZE);
+    stack = libc::malloc(STACK_SIZE);
 
     // Asigna valores por defecto
     thread -> uc_stack.ss_sp = stack;
@@ -136,10 +136,10 @@ fn my_thread_create(please_work: &dyn Fn(), *mut args: std::ptr::null_mut(), tic
     thread -> uc_link = &exit_context;
 
     // Inicializa y vacia un signal set
-    sigemptyset(&thread -> uc_sigmask);
+    libc::sigemptyset(&thread -> uc_sigmask);
 
     // Se manda la funcion al context
-    makecontext(thread, please_work, 1, args);
+    libc::makecontext(thread, please_work, 1, args);
 
     tickets[active_threads] = tickets_s;
     priority[active_threads] = priority_s;
@@ -179,7 +179,7 @@ fn my_thread_yield() {
  * no retorna nada
  * Este metodo se encarga de modificar el enlace del primer hilo, asignandole el segundo hilo
  */
-fn my_thread_join(*mut active_thread: ucontext_t, *mut waiting_thread: ucontext_t) {
+fn my_thread_join(*mut active_thread: libc::ucontext_t, *mut waiting_thread: libc::ucontext_t) {
 
     active_thread.uc_link = waiting_thread;
 
@@ -190,10 +190,10 @@ fn my_thread_join(*mut active_thread: ucontext_t, *mut waiting_thread: ucontext_
  * No retorna nada
  * libera un contexto o hilo
  */
-fn my_thread_detach(*mut thread_to_detach: ucontext_t) {
+fn my_thread_detach(*mut thread_to_detach: libc::ucontext_t) {
 
-    setcontext(thread_to_detach);
-	free(thread_to_detach);
+    libc::setcontext(thread_to_detach);
+	libc::free(thread_to_detach);
 
 }
 
@@ -206,14 +206,14 @@ fn run_all_threads() {
 
     current_thread = &threads[0];
 
-    setcontext(&threads[0]);
+    libc::setcontext(&threads[0]);
 
 }
 
 // ====== Funciones de my_scheduler ====== 
 
 let mut active_sched: i64;
-let mut signal_context: ucontext_t;
+let mut signal_context: libc::ucontext_t;
 let mut alternate: i64;
 /** my_thread_chsched
  * recibe cual sera el nuevo sched
@@ -255,7 +255,7 @@ fn sched_round_robin() {
         current_context = current_context % active_threads;
         current_thread = &threads[current_context];
 
-        setcontext(current_thread); //activa el nuevo hilo
+        libc::setcontext(current_thread); //activa el nuevo hilo
     }
 }
 
@@ -301,7 +301,7 @@ fn sched_sort() {
                 total_tickets += 1;
             }
         }
-        setcontext(current_thread);//activa el nuevo hilo
+        libc::setcontext(current_thread);//activa el nuevo hilo
     }
 }
 
@@ -345,7 +345,7 @@ fn sched_real_time() {
             priority_aux[current_context] = 1;
             current_thread = &threads[current_context];
 
-            setcontext(current_thread);
+            libc::setcontext(current_thread);
         }
     }
 
@@ -357,13 +357,13 @@ fn sched_real_time() {
  * ademas de reiniciar los signals
  */
 fn alternate_scheduler() {
-    getcontext(&signal_context);
+    libc::getcontext(&signal_context);
 
     signal_context.uc_stack.ss_sp = signal_stack;
     signal_context.uc_stack.ss_size = STACK_SIZE;
     signal_context.uc_stack.ss_flags = 0;
 
-    sigemptyset(&signal_context.uc_sigmask);
+    libc::sigemptyset(&signal_context.uc_sigmask);
 
     alternate = 0;
 
@@ -374,11 +374,11 @@ fn alternate_scheduler() {
     my_thread_chsched(alternate);
 
     match alternate{
-        0=>makecontext(&signal_context, my_sched_round_robin, 1),
-        1=>makecontext(&signal_context, my_sched_sort, 1),
-        2=>makecontext(&signal_context, my_sched_real_time, 1),
+        0=>libc::makecontext(&signal_context, my_sched_round_robin, 1),
+        1=>libc::makecontext(&signal_context, my_sched_sort, 1),
+        2=>libc::makecontext(&signal_context, my_sched_real_time, 1),
     }
     
-    swapcontext(current_thread,&signal_context);
+    libc::swapcontext(current_thread,&signal_context);
     
 }
