@@ -1,10 +1,11 @@
 #[path = "./my_pthread/my_mutex.rs"] mod my_mutex;
 #[path = "./my_pthread/my_pthread.rs"] mod my_pthread;
+#[path = "./my_pthread/animation_processor.rs"] mod animation_processor;
 use ncurses::*;
 use std::ffi::c_void;
 use libc::*;
 
-let configuration:*mut config;
+let configuration:*mut animation_processor::config;
 let mut fieldLock: i64;
 
 // Char para explosion de figura
@@ -50,14 +51,14 @@ fn move_figure(arg: *mut c_void){
    
    // Conversion del parametro de la funcion del hilo
    // a la estructura item_info
-   item_info *figure = (item_info *) arg;
+   let mut figure = (item_info *) arg;
    
    my_mutex::my_mutex_unlock(&fieldLock);
 
    my_mutex::my_mutex_lock(&fieldLock);
    
    // Se recorren los monitores para encontrar al monitor que pertenece la figura descrita
-   let mut temp_monitor: *mut monitor_info = (*mut monitor_info) malloc(sizeof(monitor_info));
+   let mut temp_monitor: *mut animation_processor::monitor_info = (*mut animation_processor::monitor_info) libc::malloc(libc::sizeof(animation_processor::monitor_info));
    
    temp_monitor = configuration.monitors_list.head;
 
@@ -96,91 +97,91 @@ fn move_figure(arg: *mut c_void){
 
             // Se encargan de limpiar la pantalla de la posicion anterior
             if(figure.posicion_actual_y <= figure.posicion_final_y){
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x-1, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+1, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+2, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+3, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+4, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+5, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+6, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+7, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+8, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+9, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+10, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x-1, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+1, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+2, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+3, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+4, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+5, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+6, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+7, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+8, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+9, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-3, figure.posicion_actual_x+10, " ");
             }
 
             // Se encargan de limpiar la pantalla de la posicion anterior
             if(figure.posicion_actual_x <= figure.posicion_final_x){
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x-1, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x-1, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x-1, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x-1, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x-1, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x-1, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x-1, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x-1, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x-1, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x-1, " ");
 
             }
 
             // Se encargan de limpiar la pantalla de la posicion anterior
             if(figure.posicion_actual_x >= figure.posicion_final_x){
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x+11, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x+11, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x+11, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x+11, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x+11, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x+11, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x+11, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x+11, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x+11, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x+11, " ");
             }
 
             // Se encargan de limpiar la pantalla de la posicion anterior
             if(figure.posicion_actual_y >= figure.posicion_final_y){
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x-1, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+1, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+2, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+3, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+4, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+5, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+6, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+7, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+8, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+9, " ");
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+10, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x-1, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+1, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+2, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+3, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+4, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+5, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+6, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+7, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+8, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+9, " ");
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+3, figure.posicion_actual_x+10, " ");
             }
 
             // Muestra la posicion actual de la figura
-            mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, figure.ascii_item[0]);
-            mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, figure.ascii_item[1]);
-            mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, figure.ascii_item[2]);
-            mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, figure.ascii_item[3]);
-            mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, figure.ascii_item[4]);
+            ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, figure.ascii_item[0]);
+            ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, figure.ascii_item[1]);
+            ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, figure.ascii_item[2]);
+            ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, figure.ascii_item[3]);
+            ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, figure.ascii_item[4]);
 
             // Verifica que la figura no se le haya acabado el tiempo de ejecucion asignado
             // Muestra animacion de explosion
             if(time(0) > figure.tiempo_de_fin){
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, Top);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, SecTop);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, mid);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, SecBot);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, Bot);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, Top);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, SecTop);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, mid);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, SecBot);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, Bot);
               wrefresh(temp_monitor. canvas_window);
               usleep(800000);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, TopExp);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, SecTopExp);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, midExp);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, SecBotExp);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, BotExp);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, TopExp);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, SecTopExp);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, midExp);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, SecBotExp);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, BotExp);
               wrefresh(temp_monitor. canvas_window);
               usleep(800000);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, TopExpFin);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, SecTopExpFin);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, midExpFin);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, SecBotExpFin);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, BotExpFin);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, TopExpFin);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, SecTopExpFin);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, midExpFin);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, SecBotExpFin);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, BotExpFin);
               wrefresh(temp_monitor. canvas_window);
               usleep(700000);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, Top);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, SecTop);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, mid);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, SecBot);
-              mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, Bot);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-2, figure.posicion_actual_x, Top);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y-1, figure.posicion_actual_x, SecTop);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y, figure.posicion_actual_x, mid);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+1, figure.posicion_actual_x, SecBot);
+              ncurses::mvwprintw(temp_monitor.canvas_window,figure.posicion_actual_y+2, figure.posicion_actual_x, Bot);
               wrefresh(temp_monitor. canvas_window);
               break;
             }
@@ -206,7 +207,7 @@ fn move_figure(arg: *mut c_void){
               my_mutex::my_mutex_unlock(&fieldLock);
 
         // Refresca los valores que se le han asignado a la ventana y los aplica
-        wrefresh(temp_monitor. canvas_window);
+        mvwprintw::wrefresh(temp_monitor. canvas_window);
 
         usleep(900000); // Shorter delay between movements
       }
