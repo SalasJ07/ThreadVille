@@ -1,3 +1,8 @@
+use crate::my_pthread::my_pthread;
+
 fn main() {
-    println!("Hello, world!");
+    
+    // Se llama a la función encargada de crear el thread
+    my_pthread::my_thread_create();
+
 }

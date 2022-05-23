@@ -373,12 +373,12 @@ fn alternate_scheduler() {
     // Se envia el valor del nuevo algoritmo de scheduling a utilizar
     my_thread_chsched(alternate);
 
-    if(active_sched == 0){makecontext(&signal_context, my_sched_round_robin, 1);}
-
-    if(active_sched == 1){makecontext(&signal_context, my_sched_sort, 1);}
-
-    if(active_sched == 2){makecontext(&signal_context, my_sched_real_time, 1);}
-
+    match alternate{
+        0=>makecontext(&signal_context, my_sched_round_robin, 1),
+        1=>makecontext(&signal_context, my_sched_sort, 1),
+        2=>makecontext(&signal_context, my_sched_real_time, 1),
+    }
+    
     swapcontext(current_thread,&signal_context);
     
 }
