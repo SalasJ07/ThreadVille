@@ -39,7 +39,9 @@ pub fn set_thread_context(){
 	let mut i: i64;
 
 	// Inicializa en 0 los dead_threads
-    for(i = 0; i < NUM_THREADS; i += 1) dead_threads[i] = 0;
+    for i in NUM_THREADS {
+        dead_threads[i] = 0;
+    } 
 
     //sale del contexto actual
     set_exit_context();
@@ -179,7 +181,7 @@ pub fn my_thread_yield() {
  * no retorna nada
  * Este metodo se encarga de modificar el enlace del primer hilo, asignandole el segundo hilo
  */
-pub fn my_thread_join(*mut active_thread: libc::ucontext_t, *mut waiting_thread: libc::ucontext_t) {
+pub fn my_thread_join(active_thread: *mut libc::ucontext_t, *mut waiting_thread: libc::ucontext_t) {
 
     active_thread.uc_link = waiting_thread;
 
@@ -190,7 +192,7 @@ pub fn my_thread_join(*mut active_thread: libc::ucontext_t, *mut waiting_thread:
  * No retorna nada
  * libera un contexto o hilo
  */
-pub fn my_thread_detach(*mut thread_to_detach: libc::ucontext_t) {
+pub fn my_thread_detach(thread_to_detach: *mut libc::ucontext_t) {
 
     libc::setcontext(thread_to_detach);
 	libc::free(thread_to_detach);
@@ -279,14 +281,14 @@ pub fn sched_sort() {
         aux = winner;
         let mut i: i64;
 
-        for (i = 0; i < active_threads; i += 1) {//revisa quien es el ganador
+        for i in active_threads {//revisa quien es el ganador
 
             aux -= tickets[i];
 
-            if(aux<=0){
-                if(dead_threads[i% active_threads]){
-                    while(dead_threads[i% active_threads]){
-                        i+=1;
+            if aux <= 0 {
+                if dead_threads[i% active_threads] {
+                    while dead_threads[i% active_threads] {
+                        i += 1;
                     }
                 }
 
@@ -320,19 +322,18 @@ pub fn sched_real_time() {
     if active_threads_aux > 0{
 
         // Itera hasta encontrar el hilo con mayor prioridad que no haya sido ejecutado
-        for (i = 0; i < active_threads; i+=1) {
+        for i in active_threads {
 
-            if(aux < priority[i] && !dead_threads[i] && !priority_aux[i]){
+            if aux < priority[i] && !dead_threads[i] && !priority_aux[i] {
 
                 current_context = i;
                 aux = priority[i];
             }
         }
 
-        if(aux == -1){
+        if aux == -1 {
 
-            for (i = 0; i < active_threads; i+=1) {
-
+            for i in active_threads {
                 priority_aux[i] = 0;
             }
 
@@ -374,9 +375,9 @@ pub fn alternate_scheduler() {
     my_thread_chsched(alternate);
 
     match alternate{
-        0=>libc::makecontext(&signal_context, my_sched_round_robin, 1),
-        1=>libc::makecontext(&signal_context, my_sched_sort, 1),
-        2=>libc::makecontext(&signal_context, my_sched_real_time, 1),
+        0=>libc::makecontext(&signal_context, sched_round_robin, 1),
+        1=>libc::makecontext(&signal_context, sched_sort, 1),
+        2=>libc::makecontext(&signal_context, sched_real_time, 1),
     }
     
     libc::swapcontext(current_thread,&signal_context);
