@@ -313,7 +313,7 @@ fn sched_sort() {
  */
 fn sched_real_time() {
     let mut aux: i64 = -1;
-    let mut last: ucontext_t = current_context;
+    let mut last: i64 = current_context;
     let mut i: i64;
 
     // Tiene la cantidad de threads que estan activos y vivos y valida si hay alguno
