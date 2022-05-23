@@ -130,13 +130,13 @@ fn my_thread_create(please_work: &dyn Fn(), *mut args: std::ptr::null_mut(), tic
     stack = libc::malloc(STACK_SIZE);
 
     // Asigna valores por defecto
-    thread -> uc_stack.ss_sp = stack;
-    thread -> uc_stack.ss_size = STACK_SIZE;
-    thread -> uc_stack.ss_flags = 0;
-    thread -> uc_link = &exit_context;
+    thread.uc_stack.ss_sp = stack;
+    thread.uc_stack.ss_size = STACK_SIZE;
+    thread.uc_stack.ss_flags = 0;
+    thread.uc_link = &exit_context;
 
     // Inicializa y vacia un signal set
-    libc::sigemptyset(&thread -> uc_sigmask);
+    libc::sigemptyset(&thread.uc_sigmask);
 
     // Se manda la funcion al context
     libc::makecontext(thread, please_work, 1, args);
