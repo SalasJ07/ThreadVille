@@ -14,17 +14,17 @@ static mut exit_context : libc::ucontext_t;
 static mut signal_stack: signal_stack::signal_stack;
 
 // Variables relacionadas a los hilos
-let mut threads_off: [i64; THREADS_NUM];
-let mut current_context: i64;
-let mut priority:[i64; THREADS_NUM];
-let mut priority_aux:[i64; THREADS_NUM];
-let mut tickets:[i64; THREADS_NUM];
-let mut dead_threads:[i64; THREADS_NUM];
-let mut current_context: i64;
-let mut initialize: i64;
-let mut active_threads: i64;
-let mut active_threads_aux: i64;
-let mut total_tickets: i64;
+static mut threads_off:[i64; THREADS_NUM] = [0,THREADS_NUM];
+static mut current_context: i64 = 0;
+static mut priority:[i64; THREADS_NUM] = [0,THREADS_NUM];
+static mut priority_aux:[i64; THREADS_NUM] = [0,THREADS_NUM];
+static mut tickets:[i64; THREADS_NUM] = [0,THREADS_NUM];
+static mut dead_threads:[i64; THREADS_NUM] = [0,THREADS_NUM];
+static mut current_context: i64 = 0;
+static mut initialize: i64 = 0;
+static mut active_threads: i64 = 0;
+static mut active_threads_aux: i64 = 0;
+static mut total_tickets: i64 = 0;
 
 /**
  * set_thread_context
@@ -212,9 +212,9 @@ pub fn run_all_threads() {
 
 // ====== Funciones de my_scheduler ====== 
 
-static mut active_sched: i64;
+static mut active_sched: i64 = 0;
 static mut signal_context: libc::ucontext_t;
-static mut alternate: i64;
+static mut alternate: i64 = 0;
 /** my_thread_chsched
  * recibe cual sera el nuevo sched
  * no retorna nada
