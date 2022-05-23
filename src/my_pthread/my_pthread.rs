@@ -115,7 +115,7 @@ pub fn set_exit_context() {
  * Este metodo se encarga de crear un hilo para la funcion que se requiera
  * Le asigna espacio de memoria, además de inicializar el hilo y agregarlo a la lista de hilos de la lib
  */
-pub fn my_thread_create(please_work: &dyn Fn(), *mut args: std::ptr::null_mut(), tickets_s: i64, priority_s: i64) {
+pub fn my_thread_create(please_work: &dyn Fn(), args: *mut std::ptr::null_mut(), tickets_s: i64, priority_s: i64) {
    
     if !initialize {
         set_thread_context();
@@ -181,7 +181,7 @@ pub fn my_thread_yield() {
  * no retorna nada
  * Este metodo se encarga de modificar el enlace del primer hilo, asignandole el segundo hilo
  */
-pub fn my_thread_join(active_thread: *mut libc::ucontext_t, *mut waiting_thread: libc::ucontext_t) {
+pub fn my_thread_join(active_thread: *mut libc::ucontext_t, waiting_thread: *mut libc::ucontext_t) {
 
     active_thread.uc_link = waiting_thread;
 
